@@ -6,7 +6,12 @@ import { buildApp } from "./test-support/app.js";
 import { seed } from "./seed.js";
 
 // Dev convenience: fresh DB + seed on every boot so reviewers get data from one command.
-if (config.dbPath !== ":memory:" && existsSync(config.dbPath)) rmSync(config.dbPath);
+// Clear the WAL/SHM sidecars too, or SQLite reads a stale/corrupt state.
+if (config.dbPath !== ":memory:") {
+  for (const suffix of ["", "-wal", "-shm"]) {
+    if (existsSync(config.dbPath + suffix)) rmSync(config.dbPath + suffix);
+  }
+}
 seed(config.dbPath);
 
 const { db } = createDb(config.dbPath);

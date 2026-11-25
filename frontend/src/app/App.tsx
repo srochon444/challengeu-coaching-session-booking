@@ -2,6 +2,8 @@ import { AppShell, Container, Title, Group, Badge, Button, Text, Stack } from "@
 import { useAuth } from "./auth-context.js";
 import { LoginPicker } from "../features/auth/LoginPicker.js";
 import { RoleGate } from "./routes.js";
+import { PublishForm } from "../features/availability/PublishForm.js";
+import { MyBlocks } from "../features/availability/MyBlocks.js";
 
 const roleColor: Record<string, string> = { coach: "indigo", student: "teal", enrollment_admin: "grape" };
 
@@ -27,7 +29,7 @@ export function App() {
           {user ? (
             <Stack>
               {/* Feature panels are added in later slices and dropped into the gates below. */}
-              <RoleGate role="coach"><section id="coach-area" /></RoleGate>
+              <RoleGate role="coach"><PublishForm /><MyBlocks /></RoleGate>
               <RoleGate role="student"><section id="student-area" /></RoleGate>
               <RoleGate role="enrollment_admin"><section id="admin-area" /></RoleGate>
             </Stack>

@@ -1,0 +1,29 @@
+{
+  "name": "@ccu/backend",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "seed": "tsx src/seed.ts",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ccu/shared": "*",
+    "better-sqlite3": "^11.3.0",
+    "drizzle-orm": "^0.36.0",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "luxon": "^3.5.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/express": "^4.17.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/supertest": "^6.0.0",
+    "drizzle-kit": "^0.28.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.0"
+  }
+}

@@ -59,6 +59,7 @@ frontend/src/
 |------|-------------|--------|
 | No double-booking (one coach + one student per slot) | **DB partial unique index** — the race is impossible by construction | ✅ index shipped, used in slice 3 |
 | A coach's availability blocks never overlap | domain `blocksOverlap()` at publish time | ✅ |
+| Availability must start in the future (no past slots) | domain `isInFuture()` at publish time (picker also enforces `min`) | ✅ |
 | Blocks are 30 or 60 minutes only | `Duration` value object | ✅ |
 | Max 3 upcoming sessions per student | domain rule in the booking transaction | ⏳ slice 3 |
 | Cancel only ≥ 24h before start; cancelling reopens the slot | pure `canCancel()` | ⏳ slice 4 |

@@ -8,3 +8,7 @@ export function canCancel(startsAtUtc: string, now: Date, windowHours = 24): boo
   const msBefore = new Date(startsAtUtc).getTime() - now.getTime();
   return msBefore >= windowHours * 3600_000;
 }
+
+export function isInFuture(instantIso: string, now: Date): boolean {
+  return new Date(instantIso).getTime() > now.getTime();
+}

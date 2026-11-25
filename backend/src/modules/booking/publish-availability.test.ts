@@ -26,3 +26,7 @@ test("rejects an invalid duration", () => {
   const { publish } = setup();
   expect(() => publish({ coachUserId: "c1", startsAtUtc: "2026-02-01T14:00:00.000Z", durationMin: 45 as 30 })).toThrow();
 });
+test("rejects a start in the past (clock is 2026-01-01)", () => {
+  const { publish } = setup();
+  expect(() => publish({ coachUserId: "c1", startsAtUtc: "2025-12-31T23:00:00.000Z", durationMin: 30 })).toThrow();
+});

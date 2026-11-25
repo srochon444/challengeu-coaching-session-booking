@@ -10,6 +10,10 @@ import { publishBlock } from "./api.js";
 function defaultLocal(tz: string): string {
   return DateTime.now().setZone(tz).plus({ days: 1 }).set({ hour: 9, minute: 0, second: 0, millisecond: 0 }).toFormat("yyyy-MM-dd'T'HH:mm");
 }
+// Earliest selectable time: now, in the coach's timezone (no past slots).
+function nowLocal(tz: string): string {
+  return DateTime.now().setZone(tz).toFormat("yyyy-MM-dd'T'HH:mm");
+}
 
 export function PublishForm() {
   const me = useMe()!;
@@ -30,7 +34,7 @@ export function PublishForm() {
         <Title order={4}>Publish availability</Title>
         <Text size="sm" c="dimmed">Times are in your timezone ({me.timezone}).</Text>
         <Group align="flex-end">
-          <TextInput type="datetime-local" label="Start" value={local} onChange={(e) => setLocal(e.currentTarget.value)} />
+          <TextInput type="datetime-local" label="Start" min={nowLocal(me.timezone)} value={local} onChange={(e) => setLocal(e.currentTarget.value)} />
           <Select
             label="Duration"
             data={[{ value: "30", label: "30 min" }, { value: "60", label: "60 min" }]}

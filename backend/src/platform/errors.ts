@@ -13,5 +13,6 @@ export class CancelWindowPassed extends DomainError { constructor() { super("CAN
 export class BlockOverlap extends DomainError { constructor() { super("BLOCK_OVERLAP", 409, "This availability overlaps an existing block."); } }
 export class InvalidDuration extends DomainError { constructor() { super("INVALID_DURATION", 422, "Availability blocks must be 30 or 60 minutes."); } }
 export class PastAvailability extends DomainError { constructor() { super("PAST_AVAILABILITY", 422, "Availability must start in the future."); } }
+export class AvailabilityBooked extends DomainError { constructor() { super("AVAILABILITY_BOOKED", 409, "This slot is already booked and can't be removed."); } }
 export class NotFound extends DomainError { constructor(what = "Resource") { super("NOT_FOUND", 404, `${what} not found.`); } }
 export class Forbidden extends DomainError { constructor() { super("FORBIDDEN", 403, "You are not allowed to do that."); } }

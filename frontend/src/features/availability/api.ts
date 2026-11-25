@@ -8,3 +8,5 @@ export const myBlocks = (coachId: string, fromUtc: string, toUtc: string) =>
   api<AvailabilityBlockDTO[]>(
     `/availability-blocks?coachId=${coachId}&fromUtc=${encodeURIComponent(fromUtc)}&toUtc=${encodeURIComponent(toUtc)}`,
   );
+
+export const removeBlock = (id: string) => api<void>(`/availability-blocks/${id}`, { method: "DELETE" });

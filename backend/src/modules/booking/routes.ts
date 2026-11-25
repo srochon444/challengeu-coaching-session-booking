@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from "../../platform/auth.js";
 import type { Clock } from "../../platform/clock.js";
 import type { AvailabilityBlockRepo, BlockRow } from "./ports.js";
 import { makePublishAvailability } from "./application/publish-availability.js";
+import { makeRemoveAvailability } from "./application/remove-availability.js";
 
 const toBlockDTO = (b: BlockRow): AvailabilityBlockDTO => ({
   id: b.id, coachUserId: b.coachUserId, startsAtUtc: b.startsAtUtc, endsAtUtc: b.endsAtUtc, durationMin: b.durationMin,
@@ -12,6 +13,7 @@ const toBlockDTO = (b: BlockRow): AvailabilityBlockDTO => ({
 
 export function bookingRoutes(deps: { blocks: AvailabilityBlockRepo; clock: Clock }): Router {
   const publish = makePublishAvailability({ blocks: deps.blocks, clock: deps.clock });
+  const remove = makeRemoveAvailability({ blocks: deps.blocks });
   const r = Router();
 
   r.post("/availability-blocks", requireAuth, requireRole("coach"), (req, res) => {
@@ -22,6 +24,12 @@ export function bookingRoutes(deps: { blocks: AvailabilityBlockRepo; clock: Cloc
   r.get("/availability-blocks", requireAuth, (req, res) => {
     const q = z.object({ coachId: z.string(), fromUtc: z.string(), toUtc: z.string() }).parse(req.query);
     res.json(deps.blocks.byCoachInRange(q.coachId, q.fromUtc, q.toUtc).map(toBlockDTO));
+  });
+
+  r.delete("/availability-blocks/:id", requireAuth, requireRole("coach"), (req, res) => {
+    const { id } = z.object({ id: z.string() }).parse(req.params);
+    remove({ blockId: id, coachUserId: req.principal!.userId });
+    res.status(204).end();
   });
 
   return r;

@@ -1,6 +1,6 @@
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import type { Db } from "../../platform/db.js";
-import { availabilityBlocks } from "../../platform/schema.js";
+import { availabilityBlocks, sessions } from "../../platform/schema.js";
 import type { AvailabilityBlockRepo, BlockRow } from "./ports.js";
 
 export function drizzleBlockRepo(db: Db): AvailabilityBlockRepo {
@@ -12,5 +12,10 @@ export function drizzleBlockRepo(db: Db): AvailabilityBlockRepo {
         .where(and(eq(availabilityBlocks.coachUserId, coachId), gte(availabilityBlocks.startsAtUtc, from), lt(availabilityBlocks.startsAtUtc, to)))
         .orderBy(availabilityBlocks.startsAtUtc)
         .all() as BlockRow[],
+    delete: (id) => { db.delete(availabilityBlocks).where(eq(availabilityBlocks.id, id)).run(); },
+    hasConfirmedSession: (blockId) =>
+      ((db.select({ c: sql<number>`count(*)` }).from(sessions)
+        .where(and(eq(sessions.availabilityBlockId, blockId), eq(sessions.status, "confirmed")))
+        .get()?.c) ?? 0) > 0,
   };
 }

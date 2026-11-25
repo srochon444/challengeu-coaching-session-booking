@@ -8,4 +8,6 @@ export interface AvailabilityBlockRepo {
   insert(b: BlockRow): void;
   byId(id: string): BlockRow | undefined;
   byCoachInRange(coachId: string, fromUtc: string, toUtc: string): BlockRow[];
+  delete(id: string): void;
+  hasConfirmedSession(blockId: string): boolean;
 }

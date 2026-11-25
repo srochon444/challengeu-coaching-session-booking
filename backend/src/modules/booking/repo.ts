@@ -60,6 +60,7 @@ export function drizzleSessionRepo(db: Db): SessionRepo {
         .get()?.c) ?? 0) > 0,
     byId: (id) => db.select().from(sessions).where(eq(sessions.id, id)).get() as SessionRow | undefined,
     cancel: (id, at) => { db.update(sessions).set({ status: "cancelled", cancelledAt: at }).where(eq(sessions.id, id)).run(); },
+    deleteForBlock: (blockId) => { db.delete(sessions).where(eq(sessions.availabilityBlockId, blockId)).run(); },
     listForUserUpcoming: (userId, nowIso) =>
       db.select().from(sessions)
         .where(and(

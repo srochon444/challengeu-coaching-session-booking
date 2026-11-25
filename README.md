@@ -25,8 +25,8 @@ Open http://localhost:5173, pick a seeded user to sign in, and try the features 
 | 1 | Foundation + authentication (pick a user → signed in, role-aware) | ✅ done |
 | 2 | Coach publishes availability (30/60-min blocks, own timezone) + sees it | ✅ done |
 | 3 | Student books an open slot (no double-booking, max 3, suspended can't book) | ✅ done |
-| 4 | Cancel a session (≥24h rule, slot reopens) | ⏳ next |
-| 5 | In-app notifications on book/cancel | ⏳ |
+| 4 | Cancel a session (≥24h rule, slot reopens) | ✅ done |
+| 5 | In-app notifications on book/cancel | ⏳ next |
 | 6 | Enrollment admin: register / suspend / reactivate students | ⏳ |
 
 ## Architecture
@@ -65,7 +65,7 @@ frontend/src/
 | Blocks are 30 or 60 minutes only | `Duration` value object | ✅ |
 | Max 3 upcoming sessions per student | domain rule checked in the booking use-case | ✅ |
 | A student can't hold two sessions at the same time (even across coaches) | `studentHasConfirmedOverlap` check in the booking use-case | ✅ |
-| Cancel only ≥ 24h before start; cancelling reopens the slot | pure `canCancel()` | ⏳ slice 4 |
+| Cancel only ≥ 24h before start; cancelling reopens the slot | pure `canCancel()`; cancel flips status so the slot frees | ✅ |
 | Suspended student can view but not book | `EnrollmentPort.canBook()` | ✅ |
 
 **Honest trade-off:** only double-booking gets a database-level guarantee (the partial unique index). Overlap and max-3 are check-then-act inside a transaction — correct under SQLite's serialized writes; on high-concurrency Postgres I'd add exclusion constraints / explicit locking.

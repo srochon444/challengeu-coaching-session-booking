@@ -22,6 +22,56 @@
 
 ---
 
+## Delivery Slices & Branch Workflow
+
+**We build in vertical slices, not layers.** Each slice ships a full-stack, 100%-working, demoable feature. Stop after any slice and everything built still works end to end. The detailed `## Task N` sections below are the implementation library; each slice composes specific tasks (and, for the frontend tasks that span slices, specific files).
+
+**Git workflow — every slice:**
+1. `git checkout main && git pull` then `git checkout -b <branch>`.
+2. Implement the slice's tasks in order (TDD; commit after each green task, as the task steps show).
+3. `git push -u origin <branch>`.
+4. `gh pr create --base main --title "<slice title>" --body "<what it delivers + demo steps>"`.
+5. **STOP.** Author reviews & merges the PR on GitHub.
+6. On "continue": back to step 1 for the next slice off updated `main`.
+
+(GitHub calls these Pull Requests; functionally the "MR to main" review gate requested.)
+
+### Slice 1 — Foundation + auth → `feat/foundation-and-auth`
+- **Backend/shared:** Task 1, Task 2, Task 3, Task 4, Task 5, Task 6, Task 7.
+- **Frontend:** Task 16 (scaffold, api client, auth context, login picker, role-gated shell).
+- **Seed:** minimal — create `backend/src/seed.ts` with a coach, a student, and an enrollment_admin (no blocks yet); wire dev boot (`main.ts`) as in Task 15 steps 1,3 but seeding only users. Add the API smoke test skeleton later.
+- **Demo acceptance:** `npm run dev` → open the app → pick a seeded user → "Signed in as X (role, timezone)". `npm test` green.
+
+### Slice 2 — Coach availability → `feat/coach-availability`
+- **Backend:** Task 9 (duration + rules), Task 10 (repos/ports/events — block repo portion), Task 11 (publish use-case + test). Add a `POST /availability-blocks` + `GET /availability-blocks` route (the coach routes from Task 13's `routes.ts`, availability endpoints only) and mount via a minimal booking module.
+- **Frontend:** Task 17 steps 1–3, 8 (availability `api.ts`, `PublishForm`, `MyBlocks`, wire coach panel).
+- **Seed:** extend `seed.ts` to 3 coaches (Toronto/Vancouver/Paris).
+- **Demo acceptance:** log in as a coach → publish a 30/60 block in your tz → see it listed; overlap/invalid-duration rejected.
+
+### Slice 3 — Student booking (core + double-booking) → `feat/student-booking`
+- **Backend:** Task 8 **(port slice only:** `ports.ts`, `repo.ts`, the `canBook` part of `service.ts`, `index.ts` — **defer the register/suspend/reactivate routes to Slice 6**), Task 10 (session repo portion), Task 12 (book use-case + concurrency/max-3 tests), Task 13 steps 4–5 (list-open-blocks, list-sessions) + the `GET /coaches`, `GET /coaches/:id/open-blocks`, `POST /sessions`, `GET /sessions` routes.
+- **Frontend:** Task 17 steps 4–6 (booking `api.ts`, `WeekGrid`, `CoachList`), Task 17 step 7 (`WeekGrid.test.tsx`), wire student panel; Task 18 steps 1–2 (sessions `api.ts`, `UpcomingList`) + student upcoming list.
+- **Seed:** register 2 students with **active** enrollment + a week of blocks per coach (Task 15 seed step 2, students portion).
+- **Demo acceptance:** log in as student → pick coach → book open slot (slot disappears) → see it in Upcoming. Double-booking + max-3 tests pass.
+
+### Slice 4 — Cancellation → `feat/cancellation`
+- **Backend:** Task 13 steps 1–3 (cancel use-case + tests), add `POST /sessions/:id/cancel` route.
+- **Frontend:** add the cancel button to `UpcomingList` (Task 18 step 2 `canCancelNow` logic).
+- **Demo acceptance:** cancel a session ≥24h out → the slot reopens (reappears in another student's grid); <24h is blocked/disabled.
+
+### Slice 5 — Notifications → `feat/notifications`
+- **Backend:** Task 14 (notifications module, subscribers, routes).
+- **Frontend:** Task 18 step 3 (notifications `api.ts`, `Inbox`), wire into student (and coach) panels.
+- **Demo acceptance:** booking/cancelling produces an in-app message rendered in the recipient's timezone.
+
+### Slice 6 — Enrollment admin → `feat/enrollment-admin`
+- **Backend:** the deferred part of Task 8 (`routes.ts`: register via `IdentityApi.createAccount`, suspend, reactivate) + mount the enrollment router.
+- **Frontend:** Task 18 step 4 (enrollment-admin `api.ts`, `StudentAdmin`), wire admin panel.
+- **Finalize:** complete the end-to-end API smoke test (Task 15 step 4) and the full README (Task 18 step 8).
+- **Demo acceptance:** log in as admin → register a student, suspend one → that student can no longer book (403), reactivate restores it.
+
+---
+
 ## File Structure
 
 ```

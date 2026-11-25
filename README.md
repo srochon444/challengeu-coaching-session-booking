@@ -15,7 +15,8 @@ npm test         # run the whole test suite (shared + backend + frontend)
 ```
 
 Open http://localhost:5173, pick a seeded user to sign in, and try the features for that role.
-Seed data: **3 coaches** (Toronto / Vancouver / Paris), **7 students**, **1 enrollment admin**.
+
+**Seed data** is generated **relative to when you launch** (so it's always upcoming): **3 coaches** (Toronto / Vancouver / Paris) — each with **~10 availability blocks** spread across the coming weekdays (**Mon–Fri, 08:00–17:00 in the coach's own timezone**, mixed 30/60-min, no overlaps) — plus **7 students** and **1 enrollment admin**.
 
 ## Delivery progress
 

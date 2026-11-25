@@ -19,5 +19,6 @@ export interface EnrollmentDTO { studentUserId: string; status: "active" | "susp
 export type ErrorCode =
   | "SLOT_TAKEN" | "STUDENT_SUSPENDED" | "MAX_UPCOMING_REACHED"
   | "CANCEL_WINDOW_PASSED" | "BLOCK_OVERLAP" | "INVALID_DURATION"
+  | "PAST_AVAILABILITY" | "AVAILABILITY_BOOKED"
   | "NOT_FOUND" | "FORBIDDEN" | "UNAUTHENTICATED" | "VALIDATION";
 export interface ApiError { code: ErrorCode; message: string; }

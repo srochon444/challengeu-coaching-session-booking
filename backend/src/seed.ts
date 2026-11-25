@@ -1,10 +1,15 @@
+import { randomUUID } from "node:crypto";
+import { DateTime } from "luxon";
 import { createDb } from "./platform/db.js";
 import { SystemClock } from "./platform/clock.js";
 import { config } from "./platform/config.js";
 import { createIdentityModule } from "./modules/identity/index.js";
+import { drizzleBlockRepo } from "./modules/booking/repo.js";
+import type { BlockRow } from "./modules/booking/ports.js";
 
 // Seed grows with each delivery slice.
-// Slice 1: 3 coaches, 7 students, 1 enrollment admin — spread across Toronto/Vancouver/Paris.
+// Slice 1: users. Slice 2: launch-relative availability (~10 upcoming blocks/coach,
+// Mon–Fri, 08:00–17:00 in the coach's own timezone, varied by coach, no overlaps).
 const COACHES: Array<{ name: string; tz: string }> = [
   { name: "Coach Alice (Toronto)", tz: "America/Toronto" },
   { name: "Coach Bruno (Vancouver)", tz: "America/Vancouver" },
@@ -21,15 +26,54 @@ const STUDENTS: Array<{ name: string; tz: string }> = [
   { name: "Student Jules", tz: "America/Toronto" },
 ];
 
+const BLOCKS_PER_COACH = 10;
+
+// Build upcoming weekday availability for one coach, in their timezone, starting
+// from "now". Two slots per weekday (a morning + an afternoon one), hours shifted
+// by the coach index so coaches differ, durations alternating 30/60, all within
+// 08:00–17:00 and strictly in the future.
+function blocksForCoach(coachUserId: string, tz: string, coachIndex: number, now: Date, createdAt: string): BlockRow[] {
+  const nowMs = now.getTime();
+  const rows: BlockRow[] = [];
+  let day = DateTime.fromMillis(nowMs).setZone(tz).startOf("day");
+
+  for (let d = 0; d < 28 && rows.length < BLOCKS_PER_COACH; d++, day = day.plus({ days: 1 })) {
+    if (day.weekday > 5) continue; // 1=Mon … 5=Fri; skip weekends
+    const hours = [8 + ((coachIndex + d) % 3), 13 + ((coachIndex + d) % 3)]; // morning 8–10, afternoon 13–15
+    hours.forEach((hour, k) => {
+      if (rows.length >= BLOCKS_PER_COACH) return;
+      const durationMin = ((coachIndex + d + k) % 2 === 0 ? 30 : 60) as 30 | 60;
+      const start = day.set({ hour, minute: 0, second: 0, millisecond: 0 });
+      const end = start.plus({ minutes: durationMin });
+      if (start.toMillis() <= nowMs) return;                        // upcoming only
+      if (end.hour > 17 || (end.hour === 17 && end.minute > 0)) return; // within business hours
+      rows.push({
+        id: randomUUID(), coachUserId, durationMin,
+        startsAtUtc: start.toUTC().toISO()!, endsAtUtc: end.toUTC().toISO()!, createdAt,
+      });
+    });
+  }
+  return rows;
+}
+
 export function seed(dbPath: string) {
   const { db } = createDb(dbPath);
   const identity = createIdentityModule(db, SystemClock).api;
+  const blocks = drizzleBlockRepo(db);
+  const now = SystemClock.now();
+  const createdAt = now.toISOString();
 
-  for (const c of COACHES) identity.createAccount({ displayName: c.name, role: "coach", timezone: c.tz });
+  let blockCount = 0;
+  COACHES.forEach((c, i) => {
+    const coach = identity.createAccount({ displayName: c.name, role: "coach", timezone: c.tz });
+    const rows = blocksForCoach(coach.id, c.tz, i, now, createdAt);
+    rows.forEach((r) => blocks.insert(r));
+    blockCount += rows.length;
+  });
   for (const s of STUDENTS) identity.createAccount({ displayName: s.name, role: "student", timezone: s.tz });
   identity.createAccount({ displayName: "Enrollment Admin", role: "enrollment_admin", timezone: "America/Toronto" });
 
-  console.log(`Seeded: ${COACHES.length} coaches, ${STUDENTS.length} students, 1 enrollment admin.`);
+  console.log(`Seeded: ${COACHES.length} coaches (${blockCount} availability blocks), ${STUDENTS.length} students, 1 enrollment admin.`);
 }
 
 // Run standalone: `npm run seed`

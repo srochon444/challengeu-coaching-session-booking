@@ -1,5 +1,6 @@
 import { createDb } from "./platform/db.js";
 import { SystemClock } from "./platform/clock.js";
+import { config } from "./platform/config.js";
 import { createIdentityModule } from "./modules/identity/index.js";
 
 // Seed grows with each delivery slice.
@@ -33,5 +34,5 @@ export function seed(dbPath: string) {
 
 // Run standalone: `npm run seed`
 if (process.argv[1] && process.argv[1].endsWith("seed.ts")) {
-  seed(process.env.DB_PATH ?? "backend/data/dev.sqlite");
+  seed(config.dbPath);
 }

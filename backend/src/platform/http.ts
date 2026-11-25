@@ -1,4 +1,4 @@
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction, type RequestHandler } from "express";
 import { ZodError } from "zod";
 import { DomainError } from "./errors.js";
 
@@ -7,6 +7,11 @@ export function createApp(): Express {
   app.use(express.json());
   return app;
 }
+
+// Express 4 does not forward rejected promises from async handlers to the error
+// middleware; wrap async handlers so their rejections reach the error mapper.
+export const asyncHandler = (fn: RequestHandler): RequestHandler => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
 
 export function mountErrorMapper(app: Express): void {
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

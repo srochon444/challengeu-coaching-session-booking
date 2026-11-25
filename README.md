@@ -24,8 +24,8 @@ Open http://localhost:5173, pick a seeded user to sign in, and try the features 
 |-------|---------|--------|
 | 1 | Foundation + authentication (pick a user → signed in, role-aware) | ✅ done |
 | 2 | Coach publishes availability (30/60-min blocks, own timezone) + sees it | ✅ done |
-| 3 | Student books an open slot (no double-booking, max 3, suspended can't book) | ⏳ next |
-| 4 | Cancel a session (≥24h rule, slot reopens) | ⏳ |
+| 3 | Student books an open slot (no double-booking, max 3, suspended can't book) | ✅ done |
+| 4 | Cancel a session (≥24h rule, slot reopens) | ⏳ next |
 | 5 | In-app notifications on book/cancel | ⏳ |
 | 6 | Enrollment admin: register / suspend / reactivate students | ⏳ |
 
@@ -39,8 +39,8 @@ backend/src/
   platform/             cross-cutting: db, schema, event bus, http, JWT auth, errors, clock
   modules/
     identity/           accounts + roles + login (the "simple auth")
-    booking/            CORE: availability, (sessions/booking in later slices)
-    enrollment/         SUPPORTING — student access status            (slice 3+)
+    booking/            CORE: availability, sessions, booking rules
+    enrollment/         SUPPORTING — student access status (canBook)
     notifications/      SUPPORTING — in-app messages                  (slice 5)
   main.ts               composition root — the only file that wires all modules
 frontend/src/
@@ -58,14 +58,14 @@ frontend/src/
 
 | Rule | Enforcement | Status |
 |------|-------------|--------|
-| No double-booking (one coach + one student per slot) | **DB partial unique index** — the race is impossible by construction | ✅ index shipped, used in slice 3 |
+| No double-booking (one coach + one student per slot) | **DB partial unique index** — the race is impossible by construction | ✅ |
 | A coach's availability blocks never overlap | domain `blocksOverlap()` at publish time | ✅ |
 | Availability must start in the future (no past slots) | domain `isInFuture()` at publish time (picker also enforces `min`) | ✅ |
 | A coach may remove a slot only if no student has booked it | `removeAvailability` use-case checks owner + no confirmed session | ✅ |
 | Blocks are 30 or 60 minutes only | `Duration` value object | ✅ |
-| Max 3 upcoming sessions per student | domain rule in the booking transaction | ⏳ slice 3 |
+| Max 3 upcoming sessions per student | domain rule checked in the booking use-case | ✅ |
 | Cancel only ≥ 24h before start; cancelling reopens the slot | pure `canCancel()` | ⏳ slice 4 |
-| Suspended student can view but not book | `EnrollmentPort.canBook()` | ⏳ slice 3/6 |
+| Suspended student can view but not book | `EnrollmentPort.canBook()` | ✅ |
 
 **Honest trade-off:** only double-booking gets a database-level guarantee (the partial unique index). Overlap and max-3 are check-then-act inside a transaction — correct under SQLite's serialized writes; on high-concurrency Postgres I'd add exclusion constraints / explicit locking.
 

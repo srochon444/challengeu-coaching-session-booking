@@ -48,6 +48,22 @@ test("two bookings on the same block → exactly one confirmed (double-booking i
   expect(results.filter((r) => r.status === "rejected")).toHaveLength(1);
 });
 
+test("a student cannot book a time overlapping one they already hold (even a different coach)", async () => {
+  const { db, book } = setup();
+  await book({ studentUserId: "s1", availabilityBlockId: "b1" }); // 14:00–14:30
+  db.insert(users).values({ id: "c2", displayName: "C2", role: "coach", timezone: "America/Toronto", createdAt: "2026-01-10T00:00:00.000Z" }).run();
+  db.insert(availabilityBlocks).values({ id: "bX", coachUserId: "c2", startsAtUtc: "2026-02-01T14:15:00.000Z", endsAtUtc: "2026-02-01T14:45:00.000Z", durationMin: 30, createdAt: "2026-01-10T00:00:00.000Z" }).run();
+  await expect(book({ studentUserId: "s1", availabilityBlockId: "bX" })).rejects.toThrow();
+});
+
+test("an adjacent (non-overlapping) time is allowed", async () => {
+  const { db, book } = setup();
+  await book({ studentUserId: "s1", availabilityBlockId: "b1" }); // 14:00–14:30
+  db.insert(availabilityBlocks).values({ id: "bAdj", coachUserId: "c1", startsAtUtc: "2026-02-01T14:30:00.000Z", endsAtUtc: "2026-02-01T15:00:00.000Z", durationMin: 30, createdAt: "2026-01-10T00:00:00.000Z" }).run();
+  const s = await book({ studentUserId: "s1", availabilityBlockId: "bAdj" });
+  expect(s.status).toBe("confirmed");
+});
+
 test("4th upcoming booking is rejected (max 3)", async () => {
   const { book, mkBlock } = setup();
   mkBlock("b2", "2026-02-02T14:00:00.000Z");

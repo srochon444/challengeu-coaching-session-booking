@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { SessionDTO } from "@ccu/shared";
 import type { Clock } from "../../../platform/clock.js";
 import type { EventBus } from "../../../platform/event-bus.js";
-import { MaxUpcomingReached, NotFound, StudentSuspended } from "../../../platform/errors.js";
+import { MaxUpcomingReached, NotFound, StudentSuspended, StudentTimeConflict } from "../../../platform/errors.js";
 import { MAX_UPCOMING } from "../domain/rules.js";
 import { SESSION_BOOKED, type SessionEvent } from "../events.js";
 import type { AvailabilityBlockRepo, EnrollmentPort, SessionRepo } from "../ports.js";
@@ -14,6 +14,8 @@ export function makeBookSession(deps: {
     const block = deps.blocks.byId(input.availabilityBlockId);
     if (!block) throw new NotFound("Availability block");
     if (!(await deps.enrollment.canBook(input.studentUserId))) throw new StudentSuspended();
+    // A student can't be in two places at once: reject a time that overlaps one they already hold.
+    if (deps.sessions.studentHasConfirmedOverlap(input.studentUserId, block.startsAtUtc, block.endsAtUtc)) throw new StudentTimeConflict();
     const nowIso = deps.clock.now().toISOString();
     if (deps.sessions.countUpcomingForStudent(input.studentUserId, nowIso) >= MAX_UPCOMING) throw new MaxUpcomingReached();
 

@@ -35,7 +35,8 @@ export function bookingRoutes(deps: {
   });
   r.get("/availability-blocks", requireAuth, (req, res) => {
     const q = z.object({ coachId: z.string(), fromUtc: z.string(), toUtc: z.string() }).parse(req.query);
-    res.json(deps.blocks.byCoachInRange(q.coachId, q.fromUtc, q.toUtc).map(toBlockDTO));
+    res.json(deps.blocks.byCoachInRange(q.coachId, q.fromUtc, q.toUtc)
+      .map((b) => ({ ...toBlockDTO(b), booked: deps.blocks.hasConfirmedSession(b.id) })));
   });
   r.delete("/availability-blocks/:id", requireAuth, requireRole("coach"), (req, res) => {
     const { id } = z.object({ id: z.string() }).parse(req.params);

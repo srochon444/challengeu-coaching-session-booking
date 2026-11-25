@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, or, sql, notExists } from "drizzle-orm";
+import { and, eq, gt, gte, lt, or, sql, notExists } from "drizzle-orm";
 import type { Db } from "../../platform/db.js";
 import { availabilityBlocks, sessions } from "../../platform/schema.js";
 import { SlotTaken } from "../../platform/errors.js";
@@ -47,6 +47,17 @@ export function drizzleSessionRepo(db: Db): SessionRepo {
       (db.select({ c: sql<number>`count(*)` }).from(sessions)
         .where(and(eq(sessions.studentUserId, studentId), eq(sessions.status, "confirmed"), gte(sessions.startsAtUtc, nowIso)))
         .get()?.c) ?? 0,
+    // A confirmed session for this student that overlaps [startsAtUtc, endsAtUtc).
+    // Overlap = existing.start < new.end AND existing.end > new.start (adjacent is OK).
+    studentHasConfirmedOverlap: (studentId, startsAtUtc, endsAtUtc) =>
+      ((db.select({ c: sql<number>`count(*)` }).from(sessions)
+        .where(and(
+          eq(sessions.studentUserId, studentId),
+          eq(sessions.status, "confirmed"),
+          lt(sessions.startsAtUtc, endsAtUtc),
+          gt(sessions.endsAtUtc, startsAtUtc),
+        ))
+        .get()?.c) ?? 0) > 0,
     byId: (id) => db.select().from(sessions).where(eq(sessions.id, id)).get() as SessionRow | undefined,
     cancel: (id, at) => { db.update(sessions).set({ status: "cancelled", cancelledAt: at }).where(eq(sessions.id, id)).run(); },
     listForUserUpcoming: (userId, nowIso) =>

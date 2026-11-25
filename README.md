@@ -16,7 +16,7 @@ npm test         # run the whole test suite (shared + backend + frontend)
 
 Open http://localhost:5173, pick a seeded user to sign in, and try the features for that role.
 
-**Seed data** is generated **relative to when you launch** (so it's always upcoming): **3 coaches** (Toronto / Vancouver / Paris) — each with **~10 availability blocks** spread across the coming weekdays (**Mon–Fri, 08:00–17:00 in the coach's own timezone**, mixed 30/60-min, no overlaps) — plus **7 students** and **1 enrollment admin**.
+**Seed data** is generated **relative to when you launch** (so it's always upcoming): **3 coaches** (Toronto / Vancouver / Paris) — each with **~20 availability blocks** spread across the coming weekdays (**Mon–Fri, 08:00–17:00 in the coach's own timezone**, mixed 30/60-min, no overlaps) — plus **7 students** (one suspended) and **1 enrollment admin**.
 
 ## Delivery progress
 
@@ -64,6 +64,7 @@ frontend/src/
 | A coach may remove a slot only if no student has booked it | `removeAvailability` use-case checks owner + no confirmed session | ✅ |
 | Blocks are 30 or 60 minutes only | `Duration` value object | ✅ |
 | Max 3 upcoming sessions per student | domain rule checked in the booking use-case | ✅ |
+| A student can't hold two sessions at the same time (even across coaches) | `studentHasConfirmedOverlap` check in the booking use-case | ✅ |
 | Cancel only ≥ 24h before start; cancelling reopens the slot | pure `canCancel()` | ⏳ slice 4 |
 | Suspended student can view but not book | `EnrollmentPort.canBook()` | ✅ |
 

@@ -9,7 +9,7 @@ import { drizzleBlockRepo } from "./modules/booking/repo.js";
 import type { BlockRow } from "./modules/booking/ports.js";
 
 // Seed grows with each delivery slice.
-// Slice 1: users. Slice 2: launch-relative availability (~10 upcoming blocks/coach,
+// Slice 1: users. Slice 2: launch-relative availability (~20 upcoming blocks/coach,
 // Mon–Fri, 08:00–17:00 in the coach's own timezone, varied by coach, no overlaps).
 const COACHES: Array<{ name: string; tz: string }> = [
   { name: "Coach Alice (Toronto)", tz: "America/Toronto" },
@@ -27,7 +27,7 @@ const STUDENTS: Array<{ name: string; tz: string; suspended?: boolean }> = [
   { name: "Student Jules", tz: "America/Toronto" },
 ];
 
-const BLOCKS_PER_COACH = 10;
+const BLOCKS_PER_COACH = 20;
 
 // Build upcoming weekday availability for one coach, in their timezone, starting
 // from "now". Two slots per weekday (a morning + an afternoon one), hours shifted

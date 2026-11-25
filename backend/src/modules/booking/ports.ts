@@ -20,6 +20,7 @@ export interface AvailabilityBlockRepo {
 export interface SessionRepo {
   insertConfirmed(s: SessionRow): void; // throws SlotTaken on the unique-index violation
   countUpcomingForStudent(studentId: string, nowIso: string): number;
+  studentHasConfirmedOverlap(studentUserId: string, startsAtUtc: string, endsAtUtc: string): boolean;
   byId(id: string): SessionRow | undefined;
   cancel(id: string, at: string): void;
   listForUserUpcoming(userId: string, nowIso: string): SessionRow[];

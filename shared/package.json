@@ -1,0 +1,9 @@
+{
+  "name": "@ccu/shared",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts", "./tz": "./src/tz.ts", "./types": "./src/types.ts" },
+  "dependencies": { "luxon": "^3.5.0" },
+  "devDependencies": { "@types/luxon": "^3.4.0" }
+}

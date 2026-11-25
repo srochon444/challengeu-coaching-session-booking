@@ -4,11 +4,12 @@ import { createDb } from "./platform/db.js";
 import { SystemClock } from "./platform/clock.js";
 import { config } from "./platform/config.js";
 import { createIdentityModule } from "./modules/identity/index.js";
+import { createEnrollmentModule } from "./modules/enrollment/index.js";
 import { drizzleBlockRepo } from "./modules/booking/repo.js";
 import type { BlockRow } from "./modules/booking/ports.js";
 
 // Seed grows with each delivery slice.
-// Slice 1: users. Slice 2: launch-relative availability (~10 upcoming blocks/coach,
+// Slice 1: users. Slice 2: launch-relative availability (~20 upcoming blocks/coach,
 // Mon–Fri, 08:00–17:00 in the coach's own timezone, varied by coach, no overlaps).
 const COACHES: Array<{ name: string; tz: string }> = [
   { name: "Coach Alice (Toronto)", tz: "America/Toronto" },
@@ -16,17 +17,17 @@ const COACHES: Array<{ name: string; tz: string }> = [
   { name: "Coach Chloé (Paris)", tz: "Europe/Paris" },
 ];
 
-const STUDENTS: Array<{ name: string; tz: string }> = [
+const STUDENTS: Array<{ name: string; tz: string; suspended?: boolean }> = [
   { name: "Student Dani", tz: "America/Toronto" },
   { name: "Student Evan", tz: "America/Vancouver" },
   { name: "Student Farah", tz: "Europe/Paris" },
   { name: "Student Gabriel", tz: "America/Toronto" },
   { name: "Student Hana", tz: "America/Vancouver" },
-  { name: "Student Igor", tz: "Europe/Paris" },
+  { name: "Student Igor (suspended)", tz: "Europe/Paris", suspended: true },
   { name: "Student Jules", tz: "America/Toronto" },
 ];
 
-const BLOCKS_PER_COACH = 10;
+const BLOCKS_PER_COACH = 20;
 
 // Build upcoming weekday availability for one coach, in their timezone, starting
 // from "now". Two slots per weekday (a morning + an afternoon one), hours shifted
@@ -59,6 +60,7 @@ function blocksForCoach(coachUserId: string, tz: string, coachIndex: number, now
 export function seed(dbPath: string) {
   const { db } = createDb(dbPath);
   const identity = createIdentityModule(db, SystemClock).api;
+  const enrollment = createEnrollmentModule(db, identity, SystemClock).service;
   const blocks = drizzleBlockRepo(db);
   const now = SystemClock.now();
   const createdAt = now.toISOString();
@@ -70,10 +72,16 @@ export function seed(dbPath: string) {
     rows.forEach((r) => blocks.insert(r));
     blockCount += rows.length;
   });
-  for (const s of STUDENTS) identity.createAccount({ displayName: s.name, role: "student", timezone: s.tz });
+
+  // Students are registered through Enrollment (which owns their account + status).
+  let suspendedCount = 0;
+  for (const s of STUDENTS) {
+    const student = enrollment.register(s.name, s.tz);
+    if (s.suspended) { enrollment.setStatus(student.studentUserId, "suspended"); suspendedCount += 1; }
+  }
   identity.createAccount({ displayName: "Enrollment Admin", role: "enrollment_admin", timezone: "America/Toronto" });
 
-  console.log(`Seeded: ${COACHES.length} coaches (${blockCount} availability blocks), ${STUDENTS.length} students, 1 enrollment admin.`);
+  console.log(`Seeded: ${COACHES.length} coaches (${blockCount} availability blocks), ${STUDENTS.length} students (${suspendedCount} suspended), 1 enrollment admin.`);
 }
 
 // Run standalone: `npm run seed`

@@ -4,6 +4,8 @@ import { LoginPicker } from "../features/auth/LoginPicker.js";
 import { RoleGate } from "./routes.js";
 import { PublishForm } from "../features/availability/PublishForm.js";
 import { MyBlocks } from "../features/availability/MyBlocks.js";
+import { CoachList } from "../features/booking/CoachList.js";
+import { UpcomingList } from "../features/sessions/UpcomingList.js";
 
 const roleColor: Record<string, string> = { coach: "indigo", student: "teal", enrollment_admin: "grape" };
 
@@ -30,7 +32,7 @@ export function App() {
             <Stack>
               {/* Feature panels are added in later slices and dropped into the gates below. */}
               <RoleGate role="coach"><PublishForm /><MyBlocks /></RoleGate>
-              <RoleGate role="student"><section id="student-area" /></RoleGate>
+              <RoleGate role="student"><CoachList /><UpcomingList /></RoleGate>
               <RoleGate role="enrollment_admin"><section id="admin-area" /></RoleGate>
             </Stack>
           ) : (

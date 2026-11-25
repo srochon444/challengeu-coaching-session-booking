@@ -35,15 +35,19 @@ export function MyBlocks() {
                   <Table.Td>{formatInZone(b.startsAtUtc, me.timezone)}</Table.Td>
                   <Table.Td><Badge variant="light">{b.durationMin} min</Badge></Table.Td>
                   <Table.Td style={{ textAlign: "right" }}>
-                    <Button
-                      size="xs"
-                      variant="subtle"
-                      color="red"
-                      loading={remove.isPending && remove.variables === b.id}
-                      onClick={() => remove.mutate(b.id)}
-                    >
-                      Remove
-                    </Button>
+                    {b.booked ? (
+                      <Badge color="teal" variant="light">Booked</Badge>
+                    ) : (
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        color="red"
+                        loading={remove.isPending && remove.variables === b.id}
+                        onClick={() => remove.mutate(b.id)}
+                      >
+                        Remove
+                      </Button>
+                    )}
                   </Table.Td>
                 </Table.Tr>
               ))}

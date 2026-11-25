@@ -14,5 +14,6 @@ export class BlockOverlap extends DomainError { constructor() { super("BLOCK_OVE
 export class InvalidDuration extends DomainError { constructor() { super("INVALID_DURATION", 422, "Availability blocks must be 30 or 60 minutes."); } }
 export class PastAvailability extends DomainError { constructor() { super("PAST_AVAILABILITY", 422, "Availability must start in the future."); } }
 export class AvailabilityBooked extends DomainError { constructor() { super("AVAILABILITY_BOOKED", 409, "This slot is already booked and can't be removed."); } }
+export class StudentTimeConflict extends DomainError { constructor() { super("STUDENT_TIME_CONFLICT", 409, "You already have a session at that time."); } }
 export class NotFound extends DomainError { constructor(what = "Resource") { super("NOT_FOUND", 404, `${what} not found.`); } }
 export class Forbidden extends DomainError { constructor() { super("FORBIDDEN", 403, "You are not allowed to do that."); } }

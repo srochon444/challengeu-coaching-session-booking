@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.vite/
 *.sqlite
 *.sqlite-journal
 backend/data/

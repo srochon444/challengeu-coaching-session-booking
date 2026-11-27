@@ -34,6 +34,14 @@ export function CoachList() {
     onError: (e: Error) => alert(e.message),
   });
 
+  // Sessions starting within 24h can't be cancelled later — warn before booking one.
+  const handleBook = (id: string) => {
+    const block = blocks.find((b) => b.id === id);
+    const within24h = block && new Date(block.startsAtUtc).getTime() - Date.now() < 24 * 3600_000;
+    if (within24h && !window.confirm("This session starts within 24 hours, so you won't be able to cancel it afterward. Book it anyway?")) return;
+    book.mutate(id);
+  };
+
   return (
     <Paper withBorder p="md">
       <Stack gap="sm">
@@ -53,7 +61,7 @@ export function CoachList() {
               <Text fw={500}>Week of {formatInZone(fromUtc, me.timezone, "MMM d, yyyy")}</Text>
               <Button size="xs" variant="default" onClick={() => setWeekOffset((w) => w + 1)}>Next ›</Button>
             </Group>
-            <WeekGrid blocks={blocks} viewerTz={me.timezone} onBook={(id) => book.mutate(id)} bookingId={book.isPending ? (book.variables as string) : undefined} />
+            <WeekGrid blocks={blocks} viewerTz={me.timezone} onBook={handleBook} bookingId={book.isPending ? (book.variables as string) : undefined} />
           </>
         )}
       </Stack>

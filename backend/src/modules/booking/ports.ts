@@ -23,6 +23,7 @@ export interface SessionRepo {
   studentHasConfirmedOverlap(studentUserId: string, startsAtUtc: string, endsAtUtc: string): boolean;
   byId(id: string): SessionRow | undefined;
   cancel(id: string, at: string): void;
+  deleteForBlock(blockId: string): void;
   listForUserUpcoming(userId: string, nowIso: string): SessionRow[];
 }
 

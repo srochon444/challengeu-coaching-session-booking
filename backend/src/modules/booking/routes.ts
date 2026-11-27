@@ -11,6 +11,7 @@ import type { AvailabilityBlockRepo, BlockRow, EnrollmentPort, SessionRepo } fro
 import { makePublishAvailability } from "./application/publish-availability.js";
 import { makeRemoveAvailability } from "./application/remove-availability.js";
 import { makeBookSession } from "./application/book-session.js";
+import { makeCancelSession } from "./application/cancel-session.js";
 import { makeListOpenBlocks } from "./application/list-open-blocks.js";
 import { makeListSessions } from "./application/list-sessions.js";
 
@@ -22,8 +23,9 @@ export function bookingRoutes(deps: {
   blocks: AvailabilityBlockRepo; sessions: SessionRepo; users: UserRepo; enrollment: EnrollmentPort; bus: EventBus; clock: Clock;
 }): Router {
   const publish = makePublishAvailability({ blocks: deps.blocks, clock: deps.clock });
-  const remove = makeRemoveAvailability({ blocks: deps.blocks });
+  const remove = makeRemoveAvailability({ blocks: deps.blocks, sessions: deps.sessions });
   const book = makeBookSession({ blocks: deps.blocks, sessions: deps.sessions, enrollment: deps.enrollment, bus: deps.bus, clock: deps.clock });
+  const cancel = makeCancelSession({ sessions: deps.sessions, bus: deps.bus, clock: deps.clock });
   const listOpen = makeListOpenBlocks({ blocks: deps.blocks });
   const listSessions = makeListSessions({ sessions: deps.sessions, clock: deps.clock });
   const r = Router();
@@ -55,6 +57,11 @@ export function bookingRoutes(deps: {
     const { availabilityBlockId } = z.object({ availabilityBlockId: z.string() }).parse(req.body);
     res.status(201).json(await book({ studentUserId: req.principal!.userId, availabilityBlockId }));
   }));
+  r.post("/sessions/:id/cancel", requireAuth, requireRole("student"), (req, res) => {
+    const { id } = z.object({ id: z.string() }).parse(req.params);
+    cancel({ sessionId: id, requesterUserId: req.principal!.userId });
+    res.json({ ok: true });
+  });
   r.get("/sessions", requireAuth, (req, res) => res.json(listSessions({ userId: req.principal!.userId })));
 
   return r;

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { createDb } from "../../platform/db.js";
-import { drizzleBlockRepo } from "./repo.js";
+import { drizzleBlockRepo, drizzleSessionRepo } from "./repo.js";
 import { makeRemoveAvailability } from "./application/remove-availability.js";
 import { users, availabilityBlocks, sessions } from "../../platform/schema.js";
 
@@ -13,7 +13,8 @@ function setup() {
   const addBlock = (id: string) =>
     db.insert(availabilityBlocks).values({ id, coachUserId: "c1", startsAtUtc: "2026-02-01T14:00:00.000Z", endsAtUtc: "2026-02-01T14:30:00.000Z", durationMin: 30, createdAt: at }).run();
   const blocks = drizzleBlockRepo(db);
-  return { db, blocks, addBlock, remove: makeRemoveAvailability({ blocks }) };
+  const sessionRepo = drizzleSessionRepo(db);
+  return { db, blocks, addBlock, remove: makeRemoveAvailability({ blocks, sessions: sessionRepo }) };
 }
 
 test("coach removes their own unbooked block", () => {
@@ -45,4 +46,16 @@ test("a booked (confirmed) block cannot be removed", () => {
 test("removing a missing block throws", () => {
   const { remove } = setup();
   expect(() => remove({ blockId: "nope", coachUserId: "c1" })).toThrow();
+});
+
+test("a block whose booking was cancelled can be removed (no FK error)", () => {
+  const { db, addBlock, remove, blocks } = setup();
+  addBlock("b1");
+  db.insert(sessions).values({
+    id: "x1", availabilityBlockId: "b1", studentUserId: "s1", coachUserId: "c1",
+    startsAtUtc: "2026-02-01T14:00:00.000Z", endsAtUtc: "2026-02-01T14:30:00.000Z",
+    status: "cancelled", createdAt: "2026-01-01T00:00:00.000Z", cancelledAt: "2026-01-02T00:00:00.000Z",
+  }).run();
+  remove({ blockId: "b1", coachUserId: "c1" });
+  expect(blocks.byId("b1")).toBeUndefined();
 });
